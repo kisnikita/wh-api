@@ -15,7 +15,7 @@ func (h *Handler) getAvailableProducts(c *gin.Context) {
 	}
 	products, err := h.services.GetAvailableProducts(warehouseID)
 	if err != nil {
-		NewErrorResponse(c, http.StatusInternalServerError, err.Error())
+		NewErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -38,7 +38,7 @@ func (h *Handler) reserveProducts(c *gin.Context) {
 
 	response, err := h.services.ReserveProducts(reservations)
 	if err != nil {
-		NewErrorResponse(c, http.StatusInternalServerError, err.Error())
+		NewErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -61,7 +61,7 @@ func (h *Handler) releaseProducts(c *gin.Context) {
 
 	response, err := h.services.ReleaseProducts(releases)
 	if err != nil {
-		NewErrorResponse(c, http.StatusInternalServerError, err.Error())
+		NewErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 

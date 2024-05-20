@@ -94,7 +94,7 @@ func (r *WarehousePostgres) ReserveProducts(request model.ReserveProductsRequest
 	response := make([]*model.UpdateProductsResponse, len(products))
 	for i, product := range products {
 		response[i] = &model.UpdateProductsResponse{
-			ID:       product[0].ID,
+			ID:       product[0].ProductID,
 			Amount:   product[0].Amount,
 			Reserved: product[0].Reserved,
 		}
@@ -157,7 +157,7 @@ func (r *WarehousePostgres) ReleaseProducts(request model.ReleaseProductsRequest
 	response := make([]*model.UpdateProductsResponse, len(products))
 	for i, product := range products {
 		response[i] = &model.UpdateProductsResponse{
-			ID:       product[0].ID,
+			ID:       product[0].ProductID,
 			Amount:   product[0].Amount,
 			Reserved: product[0].Reserved,
 		}
