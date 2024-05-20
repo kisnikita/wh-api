@@ -20,9 +20,9 @@ func (h Handler) InitRoutes() *gin.Engine {
 	{
 		wh := api.Group("/warehouse")
 		{
-			wh.GET(":id", h.getByID)
-			wh.POST("/reserve", h.reserveProducts)
-			wh.POST("/release", h.releaseProducts)
+			wh.GET("/available/products/:id", h.getAvailableProducts)
+			wh.PUT("/reserve/products", h.reserveProducts)
+			wh.PUT("/release/products", h.releaseProducts)
 		}
 	}
 	return router
