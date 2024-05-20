@@ -2,26 +2,29 @@ package main
 
 import (
 	"context"
+	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
 	"github.com/kisnikita/wh-api/internal/handler"
 	"github.com/kisnikita/wh-api/internal/repository"
 	"github.com/kisnikita/wh-api/internal/server"
 	"github.com/kisnikita/wh-api/internal/service"
 	_ "github.com/lib/pq"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 )
 
 func main() {
+	logrus.SetFormatter(new(logrus.JSONFormatter))
+
 	if err := initConfig(); err != nil {
-		log.Fatalf("error init configs: %s", err.Error())
+		logrus.Fatalf("error init configs: %s", err.Error())
 	}
 
 	if err := godotenv.Load(); err != nil {
-		log.Fatalf("error loading env variables: %s", err.Error())
+		logrus.Fatalf("error loading env variables: %s", err.Error())
 	}
 
 	db, err := repository.NewPostgresDB(repository.Config{
@@ -34,7 +37,7 @@ func main() {
 	})
 
 	if err != nil {
-		log.Fatalf("failed to initialize db: %s", err.Error())
+		logrus.Fatalf("failed to initialize db: %s", err.Error())
 	}
 
 	srv := new(server.Server)
@@ -42,26 +45,30 @@ func main() {
 	services := service.NewService(repo)
 	handlers := handler.NewHandler(services)
 
-	if err := srv.Run("8088", handlers.InitRoutes()); err != nil {
-		log.Fatalf("error ocured while running http server: %s", err.Error())
+	if err := srv.Run(viper.GetString("port"), handlers.InitRoutes()); err != nil {
+		logrus.Fatalf("error ocured while running http server: %s", err.Error())
 	}
 
-	quit := make(chan os.Signal)
-	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
-
-	<-quit
-
-	if err := srv.Shutdown(context.Background()); err != nil {
-		log.Fatalf("error ocured on server shutting down: %s", err.Error())
-	}
-
-	if err := db.Close(); err != nil {
-		log.Fatalf("error ocured on db connection close: %s", err.Error())
-	}
+	gracefulShutdown(srv, db)
 }
 
 func initConfig() error {
 	viper.AddConfigPath("configs")
 	viper.SetConfigName("config")
 	return viper.ReadInConfig()
+}
+
+func gracefulShutdown(srv *server.Server, db *sqlx.DB) {
+	quit := make(chan os.Signal)
+	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+
+	<-quit
+
+	if err := srv.Shutdown(context.Background()); err != nil {
+		logrus.Fatalf("error ocured on server shutting down: %s", err.Error())
+	}
+
+	if err := db.Close(); err != nil {
+		logrus.Fatalf("error ocured on db connection close: %s", err.Error())
+	}
 }
